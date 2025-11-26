@@ -3,13 +3,18 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, (process as any).cwd(), '');
+  const env = loadEnv(mode, process.cwd(), '');
+  
+  // Get API Key from Vercel System Env (process.env) or .env file (env)
+  const apiKey = process.env.API_KEY || env.API_KEY;
+
   return {
     plugins: [react()],
     define: {
-      // Polyfill process.env.API_KEY so it works in the browser
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      // Create a bridge: Inject the server-side API_KEY into the client-side VITE_API_KEY
+      'import.meta.env.VITE_API_KEY': JSON.stringify(apiKey),
+      // Fallback for older code style
+      'process.env.API_KEY': JSON.stringify(apiKey)
     }
   };
 });

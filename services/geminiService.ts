@@ -1,14 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Difficulty, MissionId, MathProblem } from "../types";
 
-// Access API Key directly. 
-// Vite's 'define' plugin replaces 'process.env.API_KEY' with the actual string value during build.
-// We suppress the TS error because 'process' doesn't exist in the browser, but the string replacement happens before that.
-// @ts-ignore
-const apiKey = process.env.API_KEY;
+// Access API Key via the bridge we built in vite.config.ts
+// This is the standard way for Vite applications
+const apiKey = import.meta.env.VITE_API_KEY;
 
-// Only initialize if we have a key, otherwise we'll handle it in the function calls
-// Using a dummy key string if empty allows the constructor to pass, but calls will fail gracefully later
+// Only initialize if we have a key
 const ai = new GoogleGenAI({ apiKey: apiKey || 'dummy-key' });
 
 // Helper to get Thai topic name
@@ -23,8 +20,8 @@ const getTopicName = (id: MissionId): string => {
 };
 
 export const generateProblem = async (missionId: MissionId, difficulty: Difficulty): Promise<MathProblem> => {
-  // Check if apiKey is valid (not undefined, null, empty, or dummy)
-  if (!apiKey || apiKey === 'dummy-key') {
+  // Check if apiKey is valid
+  if (!apiKey || apiKey === 'dummy-key' || apiKey === '') {
      console.warn("API Key is missing. Using offline fallback.");
      return getFallbackProblem(missionId);
   }
@@ -76,7 +73,6 @@ export const generateProblem = async (missionId: MissionId, difficulty: Difficul
 
   } catch (error) {
     console.error("Gemini Generation Error:", error);
-    // Fallback problem in case of API failure or rate limit
     return getFallbackProblem(missionId);
   }
 };
